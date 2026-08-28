@@ -1,0 +1,233 @@
+/* Orbit On-Screen Media Grabber — Windows 11 Native Fluent Style */
+#orbit-onscreen-container {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  z-index: 2147483647 !important;
+  font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  color: #0f172a !important;
+  box-sizing: border-box !important;
+  user-select: none !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+#orbit-onscreen-container * {
+  box-sizing: border-box !important;
+}
+
+/* Floating Banner Pill (Windows 11 Fluent Action Button) */
+#orbit-pill-button {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  background: #0067c0 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 4px !important;
+  padding: 6px 12px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  transition: background 0.15s ease !important;
+}
+
+#orbit-pill-button:hover {
+  background: #005fb8 !important;
+}
+
+.orbit-pill-icon {
+  width: 13px !important;
+  height: 13px !important;
+  fill: currentColor !important;
+}
+
+.orbit-pill-badge {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  border-radius: 3px !important;
+  padding: 1px 5px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  font-family: Consolas, monospace !important;
+}
+
+.orbit-pill-arrow {
+  font-size: 10px !important;
+  margin-left: 2px !important;
+}
+
+/* Expanded Windows 11 Flyout Panel */
+#orbit-expanded-panel {
+  display: none;
+  position: absolute !important;
+  bottom: 38px !important;
+  right: 0 !important;
+  width: 380px !important;
+  max-height: 420px !important;
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14) !important;
+  overflow: hidden !important;
+  flex-direction: column !important;
+}
+
+#orbit-expanded-panel.orbit-visible {
+  display: flex !important;
+}
+
+.orbit-panel-header {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding: 8px 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.orbit-header-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #0f172a !important;
+}
+
+.orbit-panel-close {
+  background: none !important;
+  border: none !important;
+  font-size: 16px !important;
+  color: #64748b !important;
+  cursor: pointer !important;
+  padding: 0 4px !important;
+  line-height: 1 !important;
+}
+
+.orbit-panel-close:hover {
+  color: #0f172a !important;
+}
+
+/* Category Tabs */
+.orbit-panel-tabs {
+  display: flex !important;
+  gap: 4px !important;
+  padding: 6px 10px !important;
+  background: #ffffff !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.orbit-tab-item {
+  background: none !important;
+  border: 1px solid transparent !important;
+  padding: 3px 8px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #475569 !important;
+  cursor: pointer !important;
+  border-radius: 3px !important;
+  transition: all 0.12s !important;
+}
+
+.orbit-tab-item:hover {
+  background: #f1f5f9 !important;
+}
+
+.orbit-tab-item.active {
+  background: #0067c0 !important;
+  color: #ffffff !important;
+}
+
+/* Stream Rows */
+.orbit-panel-body {
+  padding: 8px 10px !important;
+  overflow-y: auto !important;
+  max-height: 300px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 5px !important;
+}
+
+.orbit-media-card {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 4px !important;
+  padding: 6px 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  transition: border-color 0.12s !important;
+}
+
+.orbit-media-card:hover {
+  border-color: #0067c0 !important;
+  background: #ffffff !important;
+}
+
+.orbit-media-info {
+  flex: 1 !important;
+  overflow: hidden !important;
+}
+
+.orbit-media-name {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #0f172a !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.orbit-media-sub {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 10px !important;
+  color: #64748b !important;
+  margin-top: 2px !important;
+}
+
+.orbit-media-tag {
+  background: #e0f2fe !important;
+  color: #0369a1 !important;
+  border-radius: 2px !important;
+  padding: 1px 4px !important;
+  font-weight: 600 !important;
+  font-size: 9px !important;
+}
+
+.orbit-media-size {
+  font-family: Consolas, monospace !important;
+  color: #64748b !important;
+}
+
+/* Download Button */
+.orbit-download-trigger {
+  background: #0067c0 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 3px !important;
+  padding: 4px 10px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: background 0.12s !important;
+}
+
+.orbit-download-trigger:hover {
+  background: #005fb8 !important;
+}
+
+.orbit-download-trigger.orbit-success {
+  background: #16a34a !important;
+  cursor: default !important;
+}
+
+.orbit-download-trigger.orbit-error {
+  background: #dc2626 !important;
+}

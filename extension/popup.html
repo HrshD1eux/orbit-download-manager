@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orbit Download Manager</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 360px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8faf8;
+      color: #161c24;
+      padding: 12px;
+      font-size: 12px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #e1e5e2;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .brand img {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+    }
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+    .status-online {
+      background: #e6f7ea;
+      color: #389e0d;
+    }
+    .status-offline {
+      background: #fff1f0;
+      color: #cf1322;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 8px;
+      background: #ffffff;
+      border: 1px solid #e1e5e2;
+      border-radius: 6px;
+      padding: 2px;
+    }
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 4px 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6c7784;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .tab-btn.active {
+      background: #1677ff;
+      color: #ffffff;
+    }
+    .media-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .media-item {
+      background: #ffffff;
+      border: 1px solid #e1e5e2;
+      border-radius: 6px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .media-meta {
+      flex: 1;
+      overflow: hidden;
+    }
+    .media-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #161c24;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .media-sub {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: #6c7784;
+      margin-top: 2px;
+    }
+    .media-badge {
+      background: #e6f4ff;
+      color: #0958d9;
+      border-radius: 3px;
+      padding: 1px 4px;
+      font-weight: 600;
+    }
+    .btn {
+      background: #1677ff;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: #0e65e6; }
+    .btn.sent { background: #52c41a; cursor: default; }
+    .empty-state {
+      text-align: center;
+      color: #6c7784;
+      padding: 24px 8px;
+      font-size: 11px;
+      background: #ffffff;
+      border: 1px dashed #e1e5e2;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      <img src="icons/icon-48.png" alt="Orbit">
+      <span>Orbit Downloader</span>
+    </div>
+    <div id="connectionStatus" class="status-badge status-offline">
+      <span class="status-dot"></span>
+      <span id="statusText">Checking...</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="all">All</button>
+    <button class="tab-btn" data-tab="video">Videos</button>
+    <button class="tab-btn" data-tab="audio">Audio</button>
+    <button class="tab-btn" data-tab="subtitle">Subtitles</button>
+  </div>
+
+  <div id="mediaList" class="media-list">
+    <div class="empty-state">No media streams detected on this tab yet.</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

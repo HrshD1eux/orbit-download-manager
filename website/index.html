@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orbit Download Manager — High-Performance Download Accelerator & Stream Assembler</title>
+  <meta name="description" content="High-performance, multi-threaded parallel download manager built with Tauri 2, Rust, and React. Direct-to-disk chunk streaming, parallel HLS assembler, dynamic tail-chunk splitting, and session cookie blending.">
+  <meta name="keywords" content="download manager, rust downloader, multi-threaded download, tauri download manager, parallel hls downloader, idm alternative, neat download manager alternative">
+  <meta name="author" content="HrshD1eux">
+  <link rel="canonical" href="https://hrshd1eux.github.io/orbit-download-manager/">
+  
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="alternate icon" href="favicon.ico">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hrshd1eux.github.io/orbit-download-manager/">
+  <meta property="og:title" content="Orbit Download Manager — The Modern Download Accelerator">
+  <meta property="og:description" content="High-speed parallel downloads with 16-thread HLS stream assembly, dynamic tail-chunk splitting, and zero memory bloat. Built with Rust and Tauri 2.">
+  <meta property="og:image" content="logo.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Orbit Download Manager">
+  <meta name="twitter:description" content="High-speed parallel downloads with zero bloat and rock-solid reliability. Built with Rust and Tauri 2.">
+  <meta name="twitter:image" content="logo.png">
+
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-subtle: #f1f5f9;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --success: #10b981;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Navbar */
+    header {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-inner {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .brand img {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+    }
+    .brand-tag {
+      font-size: 11px;
+      font-weight: 600;
+      font-family: monospace;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--primary);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      list-style: none;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover { background: var(--surface-subtle); }
+
+    /* Hero */
+    .hero {
+      padding: 72px 0 48px;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .hero-badge-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--success);
+      border-radius: 50%;
+    }
+    .hero h1 {
+      font-size: 44px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .hero p {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 720px;
+      margin: 0 auto 32px;
+    }
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .release-matrix {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .release-matrix span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Section Cards */
+    .section {
+      padding: 48px 0;
+    }
+    .section-header {
+      margin-bottom: 32px;
+      text-align: center;
+    }
+    .section-header h2 {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .section-header p {
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .card p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .card-meta {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-family: monospace;
+      font-size: 11px;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* Comparison Table */
+    .table-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow-x: auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    .comp-table th, .comp-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .comp-table th {
+      background: var(--surface-subtle);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .comp-table tr:last-child td { border-bottom: none; }
+    .comp-table td:first-child {
+      font-weight: 600;
+      color: var(--text);
+      width: 280px;
+    }
+    .check {
+      color: #10b981;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .cross {
+      color: #ef4444;
+      font-weight: 700;
+    }
+    .warn {
+      color: #f59e0b;
+      font-weight: 600;
+    }
+    .highlight-col {
+      background: #f0fdf4;
+      border-left: 2px solid #22c55e;
+      border-right: 2px solid #22c55e;
+    }
+
+    /* FAQ */
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 12px;
+    }
+    .faq-item h4 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .faq-item p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* Footer */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+      margin-top: 64px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    @media (max-width: 860px) {
+      .grid-3, .grid-2 { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 32px; }
+      .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container nav-inner">
+      <a href="#" class="brand">
+        <img src="logo.png" alt="Orbit Logo">
+        <span>Orbit Download Manager</span>
+        <span class="brand-tag">v1.1.1</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#comparison">Comparison</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="https://github.com/HrshD1eux/orbit-download-manager" target="_blank" rel="noopener">GitHub</a></li>
+        <li><a href="https://github.com/HrshD1eux/orbit-download-manager/releases" class="btn btn-primary">Download</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero-badge">
+          <span class="hero-badge-dot"></span>
+          <span>Next-Gen Rust Core &bull; 100% Free &amp; Open Source</span>
+        </div>
+        <h1>The High-Performance Download Accelerator</h1>
+        <p>
+          Engineered for raw throughput, parallel HLS stream assembly, dynamic tail-chunk splitting, and zero memory overhead. The modern Windows 11 alternative to IDM and Neat.
+        </p>
+
+        <div class="hero-actions">
+          <a href="https://github.com/HrshD1eux/orbit-download-manager/releases" class="btn btn-primary" style="padding: 12px 24px; font-size: 15px;">
+            Download for Windows (x64)
+          </a>
+          <a href="https://github.com/HrshD1eux/orbit-download-manager/releases" class="btn btn-secondary" style="padding: 12px 24px; font-size: 15px;">
+            Download for Linux (.deb / AppImage)
+          </a>
+        </div>
+
+        <div class="release-matrix">
+          <span>&bull; Windows: .exe Setup &amp; .msi</span>
+          <span>&bull; Linux: .deb &amp; .AppImage</span>
+          <span>&bull; Direct WebExtension Integration</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key Features -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-header">
+          <h2>Engineered to Outperform</h2>
+          <p>Unmatched acceleration, intelligent stream stitching, and session authentication blending.</p>
+        </div>
+
+        <div class="grid-3">
+          <div class="card">
+            <h3>Parallel HLS Stream Assembler</h3>
+            <p>
+              Parses master and media HLS playlists (.m3u8) and downloads all .ts chunks concurrently with 16 parallel workers, stitching them directly into a single unified .mp4 file.
+            </p>
+            <div class="card-meta">Engine: Native Tokio HLS Assembler</div>
+          </div>
+
+          <div class="card">
+            <h3>Dynamic Tail-Chunk Splitting</h3>
+            <p>
+              Eliminates the "99% stall" bug. When any single connection lags behind at the tail end of a download, Orbit automatically bisects the remaining bytes across idle workers.
+            </p>
+            <div class="card-meta">Optimization: Sub-chunk Auto-Bisect</div>
+          </div>
+
+          <div class="card">
+            <h3>Authenticated Session Blending</h3>
+            <p>
+              Captures live browser cookies and platform request headers (Referer, Origin, sec-ch-ua) via the WebExtension, completely defeating HTTP 403 Forbidden on streaming portals.
+            </p>
+            <div class="card-meta">Auth: Live Cookie &amp; Header Passthrough</div>
+          </div>
+
+          <div class="card">
+            <h3>Multi-Source Mirror Swarming</h3>
+            <p>
+              Pings and probes multiple CDN mirrors simultaneously, streaming chunk ranges across the fastest active servers with dynamic failover if one host throttles.
+            </p>
+            <div class="card-meta">Networking: Multi-Host Swarm</div>
+          </div>
+
+          <div class="card">
+            <h3>Token-Bucket Bandwidth Limiter</h3>
+            <p>
+              Smoothly throttle global or per-download transfer rates (e.g. 2 MB/s, 5 MB/s) with zero CPU overhead, ensuring other network applications remain responsive.
+            </p>
+            <div class="card-meta">Traffic Control: Token-Bucket Rate Limiter</div>
+          </div>
+
+          <div class="card">
+            <h3>Batch Link Pattern Expander</h3>
+            <p>
+              Quickly ingest hundreds of URLs or use wildcard pattern expansion (e.g. <code>video_[01-20].mp4</code>) to generate batch queues with a single click.
+            </p>
+            <div class="card-meta">Tooling: Regex &amp; Wildcard Expander</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Benchmark & Comparison Table -->
+    <section class="section" id="comparison">
+      <div class="container">
+        <div class="section-header">
+          <h2>Competitive Benchmark Comparison</h2>
+          <p>An honest, feature-by-feature evaluation against industry standards.</p>
+        </div>
+
+        <div class="table-container">
+          <table class="comp-table">
+            <thead>
+              <tr>
+                <th>Feature / Capability</th>
+                <th class="highlight-col" style="color: #166534;">Orbit (Ours)</th>
+                <th>Internet Download Mgr</th>
+                <th>Neat Download Mgr</th>
+                <th>JDownloader 2</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Parallel Chunk Range Multi-Threading</td>
+                <td class="highlight-col"><span class="check">✓ Yes (Up to 32)</span></td>
+                <td><span class="check">✓ Yes (Up to 32)</span></td>
+                <td><span class="check">✓ Yes (Up to 32)</span></td>
+                <td><span class="check">✓ Yes (Up to 20)</span></td>
+              </tr>
+              <tr>
+                <td>Dynamic Tail-Chunk Splitting (No 99% Lag)</td>
+                <td class="highlight-col"><span class="check">✓ Built-in (Rust)</span></td>
+                <td><span class="check">✓ Proprietary</span></td>
+                <td><span class="cross">✗ No</span></td>
+                <td><span class="cross">✗ No</span></td>
+              </tr>
+              <tr>
+                <td>HLS Parallel Chunk Downloader &amp; Stitcher</td>
+                <td class="highlight-col"><span class="check">✓ 16-Thread Assembler</span></td>
+                <td><span class="check">✓ Built-in</span></td>
+                <td><span class="check">✓ Built-in</span></td>
+                <td><span class="warn">⚠ FFmpeg Plugin</span></td>
+              </tr>
+              <tr>
+                <td>Session Cookie &amp; Platform Header Blending</td>
+                <td class="highlight-col"><span class="check">✓ Live Passthrough</span></td>
+                <td><span class="check">✓ Yes</span></td>
+                <td><span class="warn">⚠ Frequent 403s</span></td>
+                <td><span class="check">✓ Account Mgr</span></td>
+              </tr>
+              <tr>
+                <td>Single-Page App (SPA) Route Zero-Delay Refresh</td>
+                <td class="highlight-col"><span class="check">✓ pushState Hook</span></td>
+                <td><span class="warn">⚠ Unreliable</span></td>
+                <td><span class="warn">⚠ Needs Reload</span></td>
+                <td><span class="cross">✗ No</span></td>
+              </tr>
+              <tr>
+                <td>Multi-Source Mirror Swarming &amp; Racing</td>
+                <td class="highlight-col"><span class="check">✓ Dynamic Multi-CDN</span></td>
+                <td><span class="cross">✗ Single URL</span></td>
+                <td><span class="cross">✗ Single URL</span></td>
+                <td><span class="check">✓ Yes</span></td>
+              </tr>
+              <tr>
+                <td>Token-Bucket Bandwidth Limiting</td>
+                <td class="highlight-col"><span class="check">✓ Per-Task &amp; Global</span></td>
+                <td><span class="check">✓ Yes</span></td>
+                <td><span class="warn">⚠ Global Only</span></td>
+                <td><span class="check">✓ Yes</span></td>
+              </tr>
+              <tr>
+                <td>Idle Memory Footprint (RAM)</td>
+                <td class="highlight-col"><span class="check">✓ ~28 MB (Rust)</span></td>
+                <td><span class="check">✓ ~18 MB (C++)</span></td>
+                <td><span class="check">✓ ~15 MB (C++)</span></td>
+                <td><span class="cross">✗ ~300 MB+ (Java)</span></td>
+              </tr>
+              <tr>
+                <td>Windows 11 Native Fluent UI Design</td>
+                <td class="highlight-col"><span class="check">✓ Segoe UI Variable</span></td>
+                <td><span class="cross">✗ 1998 Win32 UI</span></td>
+                <td><span class="warn">⚠ Dated UI</span></td>
+                <td><span class="cross">✗ Java Swing</span></td>
+              </tr>
+              <tr>
+                <td>Dedicated Transfer History &amp; Storage Audit</td>
+                <td class="highlight-col"><span class="check">✓ Built-in Page</span></td>
+                <td><span class="warn">⚠ Basic List</span></td>
+                <td><span class="cross">✗ No</span></td>
+                <td><span class="cross">✗ Lost on Exit</span></td>
+              </tr>
+              <tr>
+                <td>Batch Wildcard Pattern Expander ([01-20])</td>
+                <td class="highlight-col"><span class="check">✓ Instant Modal</span></td>
+                <td><span class="check">✓ Yes</span></td>
+                <td><span class="cross">✗ No</span></td>
+                <td><span class="check">✓ Yes</span></td>
+              </tr>
+              <tr>
+                <td>Pricing &amp; Licensing</td>
+                <td class="highlight-col"><span class="check">✓ 100% Free &amp; Open</span></td>
+                <td><span class="cross">✗ $24.95 Paid</span></td>
+                <td><span class="warn">⚠ Closed Source</span></td>
+                <td><span class="check">✓ Open Source</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture & Core Mechanics -->
+    <section class="section" id="architecture">
+      <div class="container">
+        <div class="section-header">
+          <h2>Under the Hood</h2>
+          <p>Architected for extreme I/O efficiency, resilience, and crash recovery.</p>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>Direct-to-Disk Chunk Streaming</h3>
+            <p>
+              Rather than buffering downloaded parts in system RAM, Tokio async workers stream byte ranges directly to assigned byte offsets on pre-allocated sparse files. Memory usage remains below 30 MB even during multi-gigabit transfers.
+            </p>
+            <div class="card-meta">Worker Engine: Tokio + Reqwest (Rustls)</div>
+          </div>
+
+          <div class="card">
+            <h3>Crash-Proof State Persistence</h3>
+            <p>
+              Every chunk checkpoint, byte counter, ETag, and HTTP header is written to an embedded SQLite database operating in WAL (Write-Ahead Logging) mode. Downloads seamlessly recover after power loss or abrupt network disconnection.
+            </p>
+            <div class="card-meta">Database Engine: SQLite (WAL Mode)</div>
+          </div>
+
+          <div class="card">
+            <h3>10Hz Throttled Telemetry Dispatcher</h3>
+            <p>
+              High-speed downloads can produce hundreds of progress events per second. Orbit's Rust core aggregates transfer rates and chunk states into a 100ms batched stream to guarantee zero UI stuttering or dropped frames.
+            </p>
+            <div class="card-meta">IPC Channel: Tauri 2 Throttled Events</div>
+          </div>
+
+          <div class="card">
+            <h3>Streaming Cryptographic Validation</h3>
+            <p>
+              Upon transfer completion, a single-pass streaming hasher computes SHA-256, SHA-1, and MD5 checksums concurrently, matching files against remote integrity digests with zero disk re-reads.
+            </p>
+            <div class="card-meta">Security: Single-Pass SHA256/MD5 Hasher</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+      <div class="container">
+        <div class="section-header">
+          <h2>Frequently Asked Questions</h2>
+        </div>
+
+        <div class="faq-item">
+          <h4>How does Orbit avoid HTTP 403 Forbidden errors on streaming sites?</h4>
+          <p>
+            Orbit's WebExtension captures active session cookies (including cloudflare clearance tokens) and exact platform request headers (Referer, Origin, sec-ch-ua, User-Agent) and forwards them directly to the Rust engine, allowing requests to blend in as legitimate player traffic.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <h4>How does Orbit stitch HLS (.m3u8) video streams?</h4>
+          <p>
+            When an HLS playlist is ingested, Orbit recursively resolves the highest bandwidth sub-playlist, downloads all segment chunks (.ts / .m4s) in parallel with 16 worker threads, and stitches them sequentially into a playable .mp4 container on disk.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <h4>What platforms are supported?</h4>
+          <p>
+            Orbit provides native 64-bit installers for Windows (.exe setup &amp; .msi) and Linux (.deb package &amp; portable .AppImage).
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <div>
+        <strong>Orbit Download Manager</strong> &bull; MIT License &bull; Free &amp; Open Source
+      </div>
+      <div>
+        <a href="https://github.com/HrshD1eux/orbit-download-manager" target="_blank" rel="noopener" style="color: var(--muted); text-decoration: none;">GitHub Repository</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

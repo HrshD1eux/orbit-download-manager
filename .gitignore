@@ -1,0 +1,22 @@
+# Node / Frontend
+node_modules/
+dist/
+.vite/
+.npmrc
+
+# Rust / Tauri
+target/
+src-tauri/target/
+src-tauri/gen/
+
+# Data & SQLite
+data/
+*.db
+*.db-wal
+*.db-shm
+*.orbit.part
+
+# Environment & Logs
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,197 @@
+name: Release Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'website/**'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  # --------------------------------------------------------------------------
+  # STAGE 1: DYNAMIC 40-PATCH VERSION BUMPER
+  # Computes 1.1.1 ... 1.1.40 -> 1.2.1 and syncs all config/doc files
+  # --------------------------------------------------------------------------
+  bump-version:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    outputs:
+      new_version: ${{ steps.version_calc.outputs.new_version }}
+      tag_name: ${{ steps.version_calc.outputs.tag_name }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Compute Next Version (40-Patch Rule) & Sync Files
+        id: version_calc
+        run: |
+          node -e "
+          const fs = require('fs');
+          
+          // Read root package.json
+          const pkgPath = './package.json';
+          let pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+          let [major, minor, patch] = pkg.version.split('.').map(Number);
+          
+          // 40-patch bump logic
+          if (patch >= 40) {
+            minor += 1;
+            patch = 1;
+          } else {
+            patch += 1;
+          }
+          
+          const newVersion = \`\${major}.\${minor}.\${patch}\`;
+          console.log(\`Bumping version from \${pkg.version} to \${newVersion}\`);
+          
+          // 1. Update root package.json
+          pkg.version = newVersion;
+          fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+          
+          // 2. Update frontend/package.json
+          if (fs.existsSync('./frontend/package.json')) {
+            let fPkg = JSON.parse(fs.readFileSync('./frontend/package.json', 'utf8'));
+            fPkg.version = newVersion;
+            fs.writeFileSync('./frontend/package.json', JSON.stringify(fPkg, null, 2) + '\n');
+          }
+          
+          // 3. Update src-tauri/tauri.conf.json
+          const tauriConfPath = './src-tauri/tauri.conf.json';
+          if (fs.existsSync(tauriConfPath)) {
+            let tauriConf = JSON.parse(fs.readFileSync(tauriConfPath, 'utf8'));
+            tauriConf.version = newVersion;
+            fs.writeFileSync(tauriConfPath, JSON.stringify(tauriConf, null, 2) + '\n');
+          }
+          
+          // 4. Update src-tauri/Cargo.toml
+          const cargoPath = './src-tauri/Cargo.toml';
+          if (fs.existsSync(cargoPath)) {
+            let cargoContent = fs.readFileSync(cargoPath, 'utf8');
+            cargoContent = cargoContent.replace(/^version\s*=\s*\"[^\"]+\"/m, \`version = \"\${newVersion}\"\`);
+            fs.writeFileSync(cargoPath, cargoContent);
+          }
+          
+          // 5. Update README.md
+          const readmePath = './README.md';
+          if (fs.existsSync(readmePath)) {
+            let readme = fs.readFileSync(readmePath, 'utf8');
+            readme = readme.replace(/v\d+\.\d+\.\d+/g, \`v\${newVersion}\`);
+            fs.writeFileSync(readmePath, readme);
+          }
+          
+          // 6. Update docs/index.html
+          const docsPath = './docs/index.html';
+          if (fs.existsSync(docsPath)) {
+            let docs = fs.readFileSync(docsPath, 'utf8');
+            docs = docs.replace(/v\d+\.\d+\.\d+/g, \`v\${newVersion}\`);
+            fs.writeFileSync(docsPath, docs);
+          }
+          
+          // 7. Update website/index.html
+          const websitePath = './website/index.html';
+          if (fs.existsSync(websitePath)) {
+            let web = fs.readFileSync(websitePath, 'utf8');
+            web = web.replace(/v\d+\.\d+\.\d+/g, \`v\${newVersion}\`);
+            fs.writeFileSync(websitePath, web);
+          }
+          
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, \`new_version=\${newVersion}\n\`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, \`tag_name=v\${newVersion}\n\`);
+          "
+
+      - name: Commit and Push Version Bump
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json frontend/package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml README.md docs/index.html website/index.html
+          git commit -m "chore(release): bump version to ${{ steps.version_calc.outputs.tag_name }} [skip ci]"
+          git push origin main
+          git tag ${{ steps.version_calc.outputs.tag_name }}
+          git push origin ${{ steps.version_calc.outputs.tag_name }}
+
+  # --------------------------------------------------------------------------
+  # STAGE 2: MULTI-PLATFORM NATIVE MATRIX BUILD
+  # Builds Windows (.exe setup & .msi) and Linux (.deb & .AppImage) installers
+  # --------------------------------------------------------------------------
+  build-release:
+    needs: bump-version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'windows-latest'
+            args: '--target x86_64-pc-windows-msvc'
+          - platform: 'ubuntu-22.04'
+            args: '--target x86_64-unknown-linux-gnu'
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout Tagged Release
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.bump-version.outputs.tag_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'windows-latest' && 'x86_64-pc-windows-msvc' || 'x86_64-unknown-linux-gnu' }}
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: 'src-tauri -> target'
+
+      - name: Install Linux Build Dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - name: Install Frontend Dependencies
+        run: pnpm install
+
+      - name: Build Frontend
+        run: pnpm --filter orbit-download-manager-frontend build
+
+      - name: Build Tauri App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ needs.bump-version.outputs.tag_name }}
+          releaseName: 'Orbit Download Manager ${{ needs.bump-version.outputs.tag_name }}'
+          releaseBody: |
+            ### Orbit Download Manager ${{ needs.bump-version.outputs.tag_name }}
+            
+            #### Assets included:
+            - **Windows**: `.exe` Setup & `.msi` Installer
+            - **Linux**: `.deb` Package & `.AppImage`
+            
+            _High performance, multi-threaded parallel download engine with zero bloat._
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
