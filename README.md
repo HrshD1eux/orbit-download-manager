@@ -1,8 +1,8 @@
-# Orbit Download Manager
-
 <div align="center">
 
-![Orbit Banner](docs/logo.png)
+<img src="docs/logo.png" alt="Orbit Logo" width="96" height="96" style="border-radius: 12px; margin-bottom: 8px;" />
+
+# Orbit Download Manager
 
 **High-Performance, Developer-Grade Download Accelerator & Stream Assembler**
 
