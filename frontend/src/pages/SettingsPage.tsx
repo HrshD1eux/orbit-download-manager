@@ -13,7 +13,6 @@ export const SettingsPage: React.FC = () => {
   const [defaultConnections, setDefaultConnections] = useState(16);
   const [globalSpeedLimit, setGlobalSpeedLimit] = useState<number>(0);
   const [proxyUrl, setProxyUrl] = useState('');
-  const [captchaKey, setCaptchaKey] = useState('');
   const [webhookCommand, setWebhookCommand] = useState('');
   const [savedNotice, setSavedNotice] = useState(false);
 
@@ -25,15 +24,12 @@ export const SettingsPage: React.FC = () => {
     tauriService.getDefaultDownloadDir().then(setDownloadDir).catch(console.error);
     const savedProxy = localStorage.getItem('orbit_proxy_url');
     if (savedProxy) setProxyUrl(savedProxy);
-    const savedCaptcha = localStorage.getItem('orbit_captcha_key');
-    if (savedCaptcha) setCaptchaKey(savedCaptcha);
     const savedWebhook = localStorage.getItem('orbit_webhook_cmd');
     if (savedWebhook) setWebhookCommand(savedWebhook);
   }, []);
 
   const handleSave = () => {
     localStorage.setItem('orbit_proxy_url', proxyUrl);
-    localStorage.setItem('orbit_captcha_key', captchaKey);
     localStorage.setItem('orbit_webhook_cmd', webhookCommand);
     setSavedNotice(true);
     setTimeout(() => setSavedNotice(false), 2000);
@@ -238,27 +234,6 @@ export const SettingsPage: React.FC = () => {
                 placeholder="Direct Connection (No Proxy)"
                 value={proxyUrl}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProxyUrl(e.target.value)}
-                className="text-xs font-mono"
-              />
-            </div>
-          </div>
-
-          {/* Cloudflare & Anti-Captcha Token */}
-          <div className="p-3.5 bg-surface border border-border rounded space-y-2.5">
-            <div className="flex items-center gap-2 border-b border-border pb-1.5">
-              <Shield className="w-3.5 h-3.5 text-primary" />
-              <h3 className="text-xs font-semibold text-foreground">Cloudflare & Captcha Resolver API Key</h3>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                2Captcha / Anti-Captcha Token (Auto-solves hoster challenges)
-              </label>
-              <Input
-                type="password"
-                placeholder="Paste API Key..."
-                value={captchaKey}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCaptchaKey(e.target.value)}
                 className="text-xs font-mono"
               />
             </div>

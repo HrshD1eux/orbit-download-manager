@@ -11,7 +11,8 @@
 
   function getCleanPageTitle() {
     let title = document.title || '';
-    title = title.replace(/\s*[-–|]\s*(YouTube|Vimeo|Dailymotion|Facebook|Twitter|X|Reddit|TikTok|Instagram|JioCinema|Hotstar|MX Player|Zee5).*$/i, '').trim();
+    // Strip common trailing website branding cleanly without hardcoding third-party trademarks
+    title = title.replace(/\s*[-–|•]\s*[^|–•-]+$/i, '').trim();
     if (!title) {
       const ogTitle = document.querySelector('meta[property="og:title"]')?.getAttribute('content');
       if (ogTitle) title = ogTitle.trim();
@@ -20,7 +21,7 @@
       const h1 = document.querySelector('h1')?.innerText;
       if (h1 && h1.length < 80) title = h1.trim();
     }
-    return title || 'Video_Stream';
+    return title || 'Media_Stream';
   }
 
   function reportMedia(url, type, qualityHint = null, customTitle = null) {
@@ -38,58 +39,13 @@
     );
   }
 
-  // 1. YouTube Deep Player Formats Scraper
-  function extractYouTubeStreams() {
-    try {
-      const playerResp = window.ytInitialPlayerResponse;
-      if (playerResp && playerResp.streamingData) {
-        const title = playerResp.videoDetails?.title || getCleanPageTitle();
-        const streaming = playerResp.streamingData;
-
-        // Combined Formats (Audio + Video)
-        if (streaming.formats) {
-          streaming.formats.forEach((fmt) => {
-            const streamUrl = fmt.url;
-            if (streamUrl) {
-              const quality = fmt.qualityLabel || `${fmt.height}p HD` || 'Video';
-              reportMedia(streamUrl, 'video', quality, `${title} - ${quality}`);
-            }
-          });
-        }
-
-        // Adaptive Formats (1080p, 720p, 480p, 360p, Audio tracks)
-        if (streaming.adaptiveFormats) {
-          streaming.adaptiveFormats.forEach((fmt) => {
-            const streamUrl = fmt.url;
-            if (streamUrl) {
-              const isAudio = fmt.mimeType?.startsWith('audio/');
-              let quality = '';
-              if (isAudio) {
-                const bitrate = Math.round((fmt.bitrate || 128000) / 1000);
-                quality = `Audio (${bitrate} kbps)`;
-              } else {
-                quality = fmt.qualityLabel || `${fmt.height}p` || 'Adaptive Video';
-              }
-              
-              reportMedia(streamUrl, isAudio ? 'audio' : 'video', quality, `${title} - ${quality}`);
-            }
-          });
-        }
-
-        // HLS Manifest URL if available
-        if (streaming.hlsManifestUrl) {
-          reportMedia(streaming.hlsManifestUrl, 'video', 'HLS Master Stream', `${title} - HLS Stream`);
-        }
-      }
-    } catch (_) {}
-  }
-
-  // 2. JioCinema / Hotstar / MX Player / Generic Video Player Formats Extractor
+  // 1. Generic HTML5 & Web Player Data Extractor
   function extractPlayerConfigStreams() {
     try {
-      // MX Player / Generic HLS/DASH Players
-      if (window.__INITIAL_STATE__ || window.__NEXT_DATA__) {
-        const jsonStr = JSON.stringify(window.__INITIAL_STATE__ || window.__NEXT_DATA__);
+      // Generic JSON State Containers (Next.js, Nuxt, Redux, React state)
+      const stateObj = window.__INITIAL_STATE__ || window.__NEXT_DATA__ || window.__NUXT__;
+      if (stateObj) {
+        const jsonStr = JSON.stringify(stateObj);
         const m3u8Matches = jsonStr.match(/https?:\/\/[^"'\s\\]+?\.(?:m3u8|mpd|mp4)[^"'\s\\]*/gi);
         if (m3u8Matches) {
           m3u8Matches.forEach((mUrl) => {
@@ -99,9 +55,15 @@
         }
       }
 
-      // Check Video.js / Hls.js / Plyr instances
+      // Check standard web player frameworks (Video.js, Hls.js, Dash.js, Plyr)
       if (window.hls && window.hls.url) {
         reportMedia(window.hls.url, 'video', 'HLS Master Stream', `${getCleanPageTitle()} - HLS Master`);
+      }
+      if (window.player && typeof window.player.currentSrc === 'function') {
+        const pSrc = window.player.currentSrc();
+        if (pSrc && typeof pSrc === 'string' && pSrc.startsWith('http')) {
+          reportMedia(pSrc, 'video', null, getCleanPageTitle());
+        }
       }
     } catch (_) {}
   }
@@ -113,7 +75,7 @@
       const url = typeof args[0] === 'string' ? args[0] : args[0]?.url;
       if (url && typeof url === 'string') {
         const lower = url.toLowerCase();
-        if (STREAM_EXTENSIONS.some((ext) => lower.includes(ext)) || lower.includes('videoplayback')) {
+        if (STREAM_EXTENSIONS.some((ext) => lower.includes(ext)) || lower.includes('/video/') || lower.includes('/audio/')) {
           reportMedia(url, 'fetch');
         }
       }
@@ -127,7 +89,7 @@
     try {
       if (typeof url === 'string') {
         const lower = url.toLowerCase();
-        if (STREAM_EXTENSIONS.some((ext) => lower.includes(ext)) || lower.includes('videoplayback')) {
+        if (STREAM_EXTENSIONS.some((ext) => lower.includes(ext)) || lower.includes('/video/') || lower.includes('/audio/')) {
           reportMedia(url, 'xhr');
         }
       }
@@ -155,7 +117,7 @@
     return originalPlay.apply(this, arguments);
   };
 
-  // 6. Hook SPA Route Changes (YouTube / Hotstar / MX Player dynamic video changes)
+  // 6. Hook SPA Dynamic Route Changes
   function notifyNavigation() {
     window.postMessage({ source: 'orbit-injected-sniffer', action: 'page_navigated', title: document.title }, '*');
     setTimeout(scanPage, 500);
@@ -178,7 +140,6 @@
 
   // 7. Periodic & Event Scraper
   function scanPage() {
-    extractYouTubeStreams();
     extractPlayerConfigStreams();
 
     // Check all video / audio elements in DOM

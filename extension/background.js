@@ -31,12 +31,12 @@ function isSegmentChunk(url) {
   if (!url) return false;
   const lower = url.toLowerCase();
 
-  // YouTube videoplayback chunk fragments with &range= or &sq=
-  if (lower.includes('videoplayback') && (lower.includes('&range=') || lower.includes('&sq='))) {
+  // Byte-range and sub-chunk stream fragments
+  if (lower.includes('&range=') || lower.includes('&sq=') || lower.includes('&byterange=')) {
     return true;
   }
 
-  // HLS / DASH / AnimePahe segment chunks
+  // HLS / DASH / Web media segment chunks
   if (
     /(?:segment|seg|chunk|frag|piece|part|slice)[-_]?\d+\.(?:ts|m4s|mp4)/i.test(lower) ||
     /\/\d+\.(?:ts|m4s)(?:\?|$)/i.test(lower) ||
@@ -87,7 +87,7 @@ function detectQuality(url, customQuality = null) {
 
   const lower = url.toLowerCase();
 
-  // 1. YouTube itag matching (exact regex)
+  // 1. Stream quality tags and itags
   if (/[?&]itag=(?:313|401|2160)(?:&|$)/.test(url)) return '2160p 4K Ultra HD';
   if (/[?&]itag=(?:271|400|1440)(?:&|$)/.test(url)) return '1440p 2K QHD';
   if (/[?&]itag=(?:137|248|399|299)(?:&|$)/.test(url)) return '1080p Full HD';
@@ -139,7 +139,7 @@ function cleanStreamUrl(rawUrl) {
   return url;
 }
 
-// Intercept Request Headers to blend with logged-in JioHotstar / Hotstar / OTT session
+// Forward authorized media request headers to preserve session continuity
 chrome.webRequest.onBeforeSendHeaders.addListener(
   (details) => {
     const url = details.url;
@@ -413,7 +413,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   const tabId = request.tabId || sender.tab?.id;
 
   if (request.action === 'page_navigated') {
-    // When switching videos on JioHotstar / Hotstar / YouTube / MX Player, reset media for new video
+    // When switching media on SPA dynamic route navigation, reset media for new video
     if (tabId) {
       tabMediaStore.set(tabId, []);
       chrome.action.setBadgeText({ text: '', tabId });
@@ -485,7 +485,8 @@ async function sendToOrbit(url, filename, referer = '') {
     const response = await fetch(`${ORBIT_LOCAL_URL}/add`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-Orbit-Client': 'orbit-web-extension'
       },
       body: JSON.stringify({
         url: cleanStreamUrl(url),

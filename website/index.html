@@ -538,7 +538,7 @@
               <tr>
                 <td>Windows 11 Native Fluent UI Design</td>
                 <td class="highlight-col"><span class="check">✓ Segoe UI Variable</span></td>
-                <td><span class="cross">✗ 1998 Win32 UI</span></td>
+                <td><span class="warn">⚠ Legacy Win32 UI</span></td>
                 <td><span class="warn">⚠ Dated UI</span></td>
                 <td><span class="cross">✗ Java Swing</span></td>
               </tr>
@@ -621,9 +621,9 @@
         </div>
 
         <div class="faq-item">
-          <h4>How does Orbit avoid HTTP 403 Forbidden errors on streaming sites?</h4>
+          <h4>How does Orbit avoid HTTP 403 Forbidden errors on media streaming servers?</h4>
           <p>
-            Orbit's WebExtension captures active session cookies (including cloudflare clearance tokens) and exact platform request headers (Referer, Origin, sec-ch-ua, User-Agent) and forwards them directly to the Rust engine, allowing requests to blend in as legitimate player traffic.
+            Orbit's WebExtension forwards active session headers (Referer, Origin, sec-ch-ua, User-Agent) and authorized session cookies directly to the Rust engine, ensuring download requests maintain session continuity without authorization timeouts.
           </p>
         </div>
 

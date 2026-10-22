@@ -64,7 +64,30 @@ impl ExtensionServer {
         let method = parts.next().unwrap_or("");
         let path = parts.next().unwrap_or("");
 
-        let cors_headers = "Access-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\n";
+        // Verify Origin to prevent external websites from issuing unauthorized local commands
+        let origin = request_str
+            .lines()
+            .find(|l| l.to_lowercase().starts_with("origin:"))
+            .map(|l| l[7..].trim())
+            .unwrap_or("");
+
+        let is_allowed_origin = origin.is_empty()
+            || origin.starts_with("chrome-extension://")
+            || origin.starts_with("moz-extension://")
+            || origin.starts_with("http://127.0.0.1")
+            || origin.starts_with("http://localhost");
+
+        if !is_allowed_origin {
+            let response = "HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\nUnauthorized Origin";
+            let _ = stream.write_all(response.as_bytes()).await;
+            return;
+        }
+
+        let cors_origin = if !origin.is_empty() { origin } else { "*" };
+        let cors_headers = format!(
+            "Access-Control-Allow-Origin: {}\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, X-Orbit-Client\r\n",
+            cors_origin
+        );
 
         if method == "OPTIONS" {
             let response = format!("HTTP/1.1 204 No Content\r\n{}Connection: close\r\n\r\n", cors_headers);

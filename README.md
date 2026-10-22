@@ -22,7 +22,7 @@
 
 * **16-Thread Parallel HLS Stream Assembler:** Recursively parses `.m3u8` master and media playlists, fetches all `.ts` / `.m4s` segment chunks concurrently with 16 worker threads, and automatically stitches them into a unified `.mp4` video container on disk.
 * **Dynamic Tail-Chunk Splitting:** Eliminates the notorious "99% stall" bug. When any single connection lags at the tail end of a download, Orbit bisects the remaining bytes across idle workers.
-* **Authenticated Session Cookie & Header Blending:** WebExtension captures live cookies (`chrome.cookies`) and request headers (`Referer`, `Origin`, `sec-ch-ua`, `User-Agent`), completely eliminating HTTP 403 Forbidden errors on authenticated portals (JioHotstar, Hotstar, YouTube, MX Player).
+* **Authenticated Session Cookie & Header Blending:** WebExtension forwards active request headers (`Referer`, `Origin`, `sec-ch-ua`, `User-Agent`) and session cookies, eliminating HTTP 403 Forbidden errors on media streaming servers requiring active session validation.
 * **Multi-Source Mirror Swarming & Latency Racing:** Distributes chunk ranges dynamically across multiple mirror CDNs in parallel, automatically migrating stalled chunks to faster hosts.
 * **Token-Bucket Bandwidth Limiter:** Precision speed throttling (e.g. `2 MB/s`, `5 MB/s`, `10 MB/s`, `Unlimited`) at zero CPU cost.
 * **Batch Link Importer & Pattern Range Expander:** Generates download queues from multi-line text, `.txt` files, or wildcard patterns (e.g. `https://cdn.com/ep[01-20].mp4`).
@@ -40,7 +40,7 @@
 | 2 | **Dynamic Tail-Chunk Splitting (No 99% Lag)** | ✅ **Native Rust** | ✅ Proprietary | ❌ (Stalls at 99%) | ❌ (Static) |
 | 3 | **Token-Bucket Bandwidth & Speed Cap** | ✅ **Per-Task & Global** | ✅ Per-Task & Global | ⚠️ Global only | ✅ Full |
 | 4 | **Multi-Source Mirror Swarming & Racing** | ✅ **Dynamic Multi-CDN** | ❌ (1 URL only) | ❌ | ✅ |
-| 5 | **Direct-to-Disk Chunk Streaming (Zero Buffer)** | ✅ Rust Async | ✅ C++ Buffer | ✅ C++ Buffer | ❌ Java GC Lag |
+| 5 | **Direct-to-Disk Chunk Streaming (Zero Buffer)** | ✅ Rust Async | ✅ C++ Buffer | ✅ C++ Buffer | ⚠️ High Memory |
 | 6 | **Parallel HLS 16-Thread Assembler (`.m3u8` $\to$ `.mp4`)** | ✅ **Native Rust HLS** | ✅ Native TS Muxer | ✅ C++ Stitcher | ⚠️ FFmpeg Plugin |
 | 7 | **Live Browser Session & Cookie Blending (No 403s)** | ✅ `chrome.cookies` | ✅ | ⚠️ Frequent 403s | ✅ Account Mgr |
 | 8 | **Single-Page App (SPA) Route Zero-Delay Refresh** | ✅ 0ms Reset | ⚠️ Fails on SPAs | ⚠️ Needs Reload | ❌ No |
@@ -49,12 +49,12 @@
 | 11 | **Async FTP / FTPS Protocol Downloader** | ✅ **Built-in Engine** | ✅ | ⚠️ Basic FTP | ✅ |
 | 12 | **BitTorrent & Magnet Link Protocol Ingest** | ✅ **`magnet:?` Ingest** | ❌ (No torrents) | ❌ | ❌ |
 | 13 | **Proxy Support (HTTP, HTTPS, SOCKS5)** | ✅ **Per-Task & Global** | ✅ Per-site rules | ⚠️ System only | ✅ Proxy Rotator |
-| 14 | **Visual No-Code Rule Engine Builder** | ✅ Built-in | ❌ Cluttered menus | ❌ | ⚠️ Event Scripter |
+| 14 | **Visual No-Code Rule Engine Builder** | ✅ Built-in | ❌ Complex menus | ❌ | ⚠️ Event Scripter |
 | 15 | **Scheduled Timers & Specific Time Start** | ✅ **Queue Watcher** | ✅ Full Scheduler | ❌ | ✅ |
 | 16 | **Post-Download Shell Command Webhooks** | ✅ **`{FILE}` execution** | ✅ Command run | ❌ | ✅ JS scripts |
 | 17 | **Batch Link Importer with Wildcard Expander** | ✅ **`video_[01-20].mp4`** | ✅ | ❌ | ✅ |
 | 18 | **Idle Memory Footprint (RAM)** | ✅ **~28 MB (Rust)** | ✅ ~18 MB | ✅ ~15 MB | ❌ **~300 MB+ (Java)** |
-| 19 | **Windows 11 Native Fluent UI Design** | ✅ Segoe UI Variable | ❌ **1998 Win32 UI** | ⚠️ Dated UI | ❌ **Java Swing** |
+| 19 | **Modern Fluent UI Design** | ✅ Fluent UI System | ⚠️ Legacy Win32 UI | ⚠️ Basic UI | ⚠️ Java Swing |
 | 20 | **Dedicated Transfer History & Storage Audit** | ✅ Built-in Page | ⚠️ Basic List | ❌ | ❌ Lost on Exit |
 | 21 | **Headless Terminal CLI Binary (`orbit-cli`)** | ✅ Built-in | ❌ | ❌ | ⚠️ Headless |
 | 22 | **Cross-Platform Compilation** | ✅ Win / Linux / Mac | ❌ **Windows Only** | ⚠️ Win / Mac Only | ✅ Java-based |
@@ -125,7 +125,7 @@ Binary outputs:
 1. Open `chrome://extensions/` (or `edge://extensions/`, `about:debugging` in Firefox).
 2. Enable **Developer mode** toggle in the top-right corner.
 3. Click **Load unpacked** and select the `extension/` directory from this repository.
-4. When browsing any media portal (YouTube, JioHotstar, AnimePahe, OTT sites), the floating on-screen action grabber (`[⚡ X Files Found ▾]`) will appear automatically with instant 1-click downloads directly to Orbit Desktop.
+4. When browsing any web media portal, the floating on-screen action grabber (`[⚡ X Files Found ▾]`) will appear automatically with instant 1-click downloads directly to Orbit Desktop.
 
 ---
 
@@ -143,6 +143,16 @@ orbit-cli batch links.txt --auto-start
 # Inspect download status
 orbit-cli status <download-id>
 ```
+
+---
+
+## Legal Disclaimer & Acceptable Use Policy
+
+Orbit Download Manager is an open-source, general-purpose network utility, parallel download accelerator, and stream assembler. It is designed solely for personal backups, authorized file transfers, and accessing open-access web media.
+
+* Orbit does **not** crack, decrypt, or circumvent Digital Rights Management (DRM) technologies such as Google Widevine, Apple FairPlay, or Microsoft PlayReady.
+* Users are responsible for ensuring that their downloading activities comply with applicable copyright laws, local regulations, and individual platform terms of service.
+* All product names, logos, and brands mentioned are property of their respective owners. Company, product, and service names used in this project are for identification and technical comparison purposes only. Use of these names, logos, and brands does not imply endorsement or affiliation.
 
 ---
 
